@@ -28,13 +28,13 @@ initializeApp({
 const db = getFirestore();
 
 const io = new Server(server, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"],
-      transports: ["websocket", "polling"],
-      credentials: true,
-    },
-    allowEIO3: true,
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+    transports: ["websocket", "polling"],
+    credentials: true,
+  },
+  allowEIO3: true,
   // cors: {
   //   origin: "http://localhost:3000",
   //   methods: ["GET", "POST"],
@@ -51,6 +51,8 @@ io.on("connection", (socket) => {
   socket.on("send_message", (data) => {
     // socket.to(data.room).emit("receive_message", data);
     socket.broadcast.emit("receive_message", data);
+    // console.log(`Message ${data.message}`);
+    updateTheChoosenParkingOnBoard(data.message);
 
     // checkForViolation(data.message);
 
@@ -78,6 +80,30 @@ io.on("connection", (socket) => {
     console.log("Disconnected");
   });
 });
+
+const updateTheChoosenParkingOnBoard = async (data) => {
+  let name = ""
+  arr = data.split(", ");
+  parkingLotID = arr.shift();
+  const parkingLotRef = db.collection("parkingLots").doc(parkingLotID);
+  const doc = await parkingLotRef.get();
+  if (!doc.exists) {
+    console.log("No such document!");
+  } else {
+    // console.log("Document data:", doc.data());
+    name = doc.data().name;
+    
+    console.log(name);
+  }
+  const docRef = db.collection("selected").doc("jCeKiQgdMsh8BAMTgRlr");
+    // const doc2 = await docRef.get();
+    // if (!doc2.exists) {
+    //   console.log("No such document!");
+    // } else {
+    //   console.log(doc2.data().selectedLot);
+    // }
+    await docRef.update({ selectedLot: name });
+};
 
 let parkingLotID;
 let timeIn24Hours;
@@ -120,11 +146,16 @@ const getTheCurrentDateAndTime = () => {
     localeMatcher: "best fit",
     timeZoneName: "short",
   });
+  // console.log(localDate_fromUnix)
+  // .split(", ");
+  let brokenTime = localDate_fromUnix.split(" ");
   var currentTimeToConvert = localDate_fromUnix.slice(11, 22);
-  var currentHoursIn24hours = convertTime(currentTimeToConvert);
+  // var currentHoursIn24hours = convertTime(currentTimeToConvert);
+  var currentHoursIn24hours = convertTime(brokenTime[1] + brokenTime[2]);
   timeIn24Hours = parseInt(currentHoursIn24hours);
 
   const dateInString = localDate_fromUnix.slice(0, 10);
+  console.log(brokenTime[0])
   timeStamp = moment(dateInString, "MM/DD/YYYY").unix();
 };
 
@@ -216,7 +247,6 @@ const carryOutDel = async (docID) => {
 };
 
 const delReservations = async () => {
-  
   getTheCurrentDateAndTime();
   // using this to get all parkingLot IDs..
   const parkingLots = db.collection("parkingLots");
@@ -230,22 +260,24 @@ const delReservations = async () => {
   // For each reservations-parkingLot carry out del opeartion
   snapshot_main.forEach((doc) => {
     console.log(doc.id, "=>", doc.data());
-    delEachReservation(doc.id)
+    delEachReservation(doc.id);
   });
 };
 
 const delEachReservation = async (parkingLot) => {
-    console.log(`ParkingLotID: ${parkingLot}`)
+  console.log(`ParkingLotID: ${parkingLot}`);
   const delReservationsRef = db.collection(`reservations-${parkingLot}`);
   const snapshot = await delReservationsRef
     .where("timeStamp", "<", timeStamp)
     .get();
   if (snapshot.empty) {
-    // We will keep these reservations so we get empty return... 
+    // We will keep these reservations so we get empty return...
     console.log("We will not del reservations..");
   } else {
     snapshot.forEach((doc) => {
-      console.log(`we will del the reservation...in ${parkingLot} with ID ${doc.id}`);
+      console.log(
+        `we will del the reservation...in ${parkingLot} with ID ${doc.id}`
+      );
       console.log(doc.id, "=>", doc.data());
       carryOutDelofReservations(parkingLot, doc.id);
     });
@@ -261,6 +293,6 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log("SERVER IS RUNNING");
   console.log(`This is the port: ${PORT}`);
-//   delReservations()
-// delViolations();
+  //   delReservations()
+  // delViolations();
 });
