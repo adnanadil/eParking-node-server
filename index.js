@@ -64,11 +64,18 @@ io.on("connection", (socket) => {
   socket.on("send_this", (data) => {
     // socket.to(data.room).emit("receive_message", data);
     // socket.broadcast.emit("receive_message", {message: "data.message", room: "16"});
+    // This code is needed to send open command to the NodeMCU 
     socket.broadcast.emit("receive_message", {
       message: data.message,
       room: "16",
     });
+
+    // This block is needed when we get an instruction from NodemMCU and we will 
+    // Update the server
     checkForViolation(data.message);
+    // If the parking Lot is changed then we change the name to be displayed 
+    // on top of the open gate button 
+    updateTheChoosenParkingOnBoard(data.message);
     // io.broadcast.emit("receive_message", data);
   });
 
@@ -149,12 +156,13 @@ const getTheCurrentDateAndTime = () => {
   // console.log(localDate_fromUnix)
   // .split(", ");
   let brokenTime = localDate_fromUnix.split(" ");
-  var currentTimeToConvert = localDate_fromUnix.slice(11, 22);
+  // var currentTimeToConvert = localDate_fromUnix.slice(11, 22);
   // var currentHoursIn24hours = convertTime(currentTimeToConvert);
-  var currentHoursIn24hours = convertTime(brokenTime[1] + brokenTime[2]);
+  var currentHoursIn24hours = convertTime(brokenTime[1] + " " +brokenTime[2]);
   timeIn24Hours = parseInt(currentHoursIn24hours);
 
-  const dateInString = localDate_fromUnix.slice(0, 10);
+  // const dateInString = localDate_fromUnix.slice(0, 10);
+  const dateInString = brokenTime[0];
   console.log(brokenTime[0])
   timeStamp = moment(dateInString, "MM/DD/YYYY").unix();
 };
