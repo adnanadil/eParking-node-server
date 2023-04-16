@@ -50,9 +50,11 @@ io.on("connection", (socket) => {
 
   socket.on("send_message", (data) => {
     // socket.to(data.room).emit("receive_message", data);
-    socket.broadcast.emit("receive_message", data);
     // console.log(`Message ${data.message}`);
+    /*Commented this out
+    socket.broadcast.emit("receive_message", data);
     updateTheChoosenParkingOnBoard(data.message);
+    */
 
     // checkForViolation(data.message);
 
@@ -65,6 +67,7 @@ io.on("connection", (socket) => {
     // socket.to(data.room).emit("receive_message", data);
     // socket.broadcast.emit("receive_message", {message: "data.message", room: "16"});
     // This code is needed to send open command to the NodeMCU 
+    socket.broadcast.emit("receive_parkings", data);
     socket.broadcast.emit("receive_message", {
       message: data.message,
       room: "16",
@@ -73,9 +76,11 @@ io.on("connection", (socket) => {
     // This block is needed when we get an instruction from NodemMCU and we will 
     // Update the server
     checkForViolation(data.message);
+    delViolations()
     // If the parking Lot is changed then we change the name to be displayed 
     // on top of the open gate button 
     updateTheChoosenParkingOnBoard(data.message);
+    console.log(`Recived data: ${data.message}`)
     // io.broadcast.emit("receive_message", data);
   });
 
@@ -236,13 +241,26 @@ const addViolation = async (parkingSlotName) => {
 
 const delViolations = async () => {
   getTheCurrentDateAndTime();
+  console.log(`HI: ${timeStamp}`);
   const violationRef = db.collection(`violations`);
-  const snapshot = await violationRef.where("timeStamp", "<", timeStamp).get();
+  const snapshot = await violationRef.where("timeInt", "!=", timeIn24Hours).get();
   if (snapshot.empty) {
     // Violation not added in db so we will add it now
     console.log("We will not del violations...");
   } else {
     snapshot.forEach((doc) => {
+      console.log("we will del this violation...");
+      console.log(doc.id, "=>", doc.data());
+      carryOutDel(doc.id);
+    });
+  }
+
+  const snapshot_2 = await violationRef.where("timeStamp", "<", timeStamp).get();
+  if (snapshot_2.empty) {
+    // Violation not added in db so we will add it now
+    console.log("We will not del violations...");
+  } else {
+    snapshot_2.forEach((doc) => {
       console.log("we will del this violation...");
       console.log(doc.id, "=>", doc.data());
       carryOutDel(doc.id);
@@ -301,6 +319,6 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log("SERVER IS RUNNING");
   console.log(`This is the port: ${PORT}`);
-  //   delReservations()
-  // delViolations();
+    // delReservations()
+    // delViolations();
 });
