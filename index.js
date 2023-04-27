@@ -120,6 +120,7 @@ const updateTheChoosenParkingOnBoard = async (data) => {
 let parkingLotID;
 let timeIn24Hours;
 let timeStamp;
+let dateToSave;
 
 const checkForViolation = (data) => {
   arr = data.split(", ");
@@ -163,6 +164,7 @@ const getTheCurrentDateAndTime = () => {
   let brokenTime = localDate_fromUnix.split(" ");
   // var currentTimeToConvert = localDate_fromUnix.slice(11, 22);
   // var currentHoursIn24hours = convertTime(currentTimeToConvert);
+  dateToSave = brokenTime[0]
   var currentHoursIn24hours = convertTime(brokenTime[1] + " " +brokenTime[2]);
   timeIn24Hours = parseInt(currentHoursIn24hours);
 
@@ -234,6 +236,7 @@ const addViolation = async (parkingSlotName) => {
     parkingSlotName: parkingSlotName,
     timeStamp: timeStamp,
     timeInt: timeIn24Hours,
+    date: dateToSave,
   });
 
   console.log("Added document with ID: ", res.id);
