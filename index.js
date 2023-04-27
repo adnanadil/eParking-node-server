@@ -297,7 +297,7 @@ const delEachReservation = async (parkingLot) => {
   console.log(`ParkingLotID: ${parkingLot}`);
   const delReservationsRef = db.collection(`reservations-${parkingLot}`);
   const snapshot = await delReservationsRef
-    .where("timeStamp", "<", timeStamp)
+    .where("timeStamp", "<", timeStamp - 86400 * 3)
     .get();
   if (snapshot.empty) {
     // We will keep these reservations so we get empty return...
