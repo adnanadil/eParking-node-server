@@ -54,7 +54,7 @@ io.on("connection", (socket) => {
       room: "16",
     });
     // socket.to(data.room).emit("receive_message", data);
-    // console.log(`Message ${data.message}`);
+    console.log(`Message ${data.message}`);
     /*Commented this out
     socket.broadcast.emit("receive_message", data);
     updateTheChoosenParkingOnBoard(data.message);
@@ -123,6 +123,7 @@ const updateTheChoosenParkingOnBoard = async (data) => {
 
 let parkingLotID;
 let timeIn24Hours;
+let minute;
 let timeStamp;
 let dateToSave;
 
@@ -181,6 +182,7 @@ const getTheCurrentDateAndTime = () => {
 const convertTime = (timeStr) => {
   const [time, modifier] = timeStr.split(" ");
   let [hours, minutes, seconds] = time.split(":");
+  minute = minutes
   if (hours === "12") {
     hours = "00";
   }
@@ -240,6 +242,7 @@ const addViolation = async (parkingSlotName) => {
     parkingSlotName: parkingSlotName,
     timeStamp: timeStamp,
     timeInt: timeIn24Hours,
+    minute: minute,
     date: dateToSave,
   });
 
