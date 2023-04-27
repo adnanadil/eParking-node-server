@@ -319,6 +319,6 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log("SERVER IS RUNNING");
   console.log(`This is the port: ${PORT}`);
-    // delReservations()
+    delReservations()
     // delViolations();
 });
