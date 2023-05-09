@@ -2,7 +2,6 @@ const express = require("express");
 const app = express();
 const http = require("http");
 const moment = require("moment");
-const util = require("util");
 const { Server } = require("socket.io");
 const {
   initializeApp,
@@ -35,12 +34,9 @@ const io = new Server(server, {
     credentials: true,
   },
   allowEIO3: true,
-  // cors: {
-  //   origin: "http://localhost:3000",
-  //   methods: ["GET", "POST"],
-  // },
 });
 
+// This is the main socketio server side logic which runs when socketio functions are called by the client
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
@@ -49,28 +45,16 @@ io.on("connection", (socket) => {
   });
 
   socket.on("send_message", (data) => {
+    // This will open the gate by sending instructions to the NodeMCU
     socket.broadcast.emit("receive_message", {
       message: data.message,
       room: "16",
     });
-    // socket.to(data.room).emit("receive_message", data);
     console.log(`Message ${data.message}`);
-    /*Commented this out
-    socket.broadcast.emit("receive_message", data);
-    updateTheChoosenParkingOnBoard(data.message);
-    */
-
-    // checkForViolation(data.message);
-
-    // const docRef = db.collection('users').doc('alovelace');
-    // postData(docRef)
-    // io.broadcast.emit("receive_message", data);
   });
 
   socket.on("send_this", (data) => {
-    // socket.to(data.room).emit("receive_message", data);
-    // socket.broadcast.emit("receive_message", {message: "data.message", room: "16"});
-    // This code is needed to send open command to the NodeMCU 
+    // This is sent from the NodeMCU to display the violations on the admin app after the data is being processed
     socket.broadcast.emit("receive_parkings", data);
     socket.broadcast.emit("receive_message", {
       message: data.message,
@@ -78,14 +62,13 @@ io.on("connection", (socket) => {
     });
 
     // This block is needed when we get an instruction from NodemMCU and we will 
-    // Update the server
+    // Update the server, run server side logic and update the firestore database.. 
     checkForViolation(data.message);
     delViolations()
     // If the parking Lot is changed then we change the name to be displayed 
     // on top of the open gate button 
     updateTheChoosenParkingOnBoard(data.message);
     console.log(`Recived data: ${data.message}`)
-    // io.broadcast.emit("receive_message", data);
   });
 
   console.log("Connected");
@@ -112,12 +95,6 @@ const updateTheChoosenParkingOnBoard = async (data) => {
     console.log(name);
   }
   const docRef = db.collection("selected").doc("jCeKiQgdMsh8BAMTgRlr");
-    // const doc2 = await docRef.get();
-    // if (!doc2.exists) {
-    //   console.log("No such document!");
-    // } else {
-    //   console.log(doc2.data().selectedLot);
-    // }
     await docRef.update({ selectedLot: name });
 };
 
@@ -132,14 +109,12 @@ const checkForViolation = (data) => {
 
   // Printing the converted string array
   for (i = 0; i < arr.length; i++) {
-    //   console.log(JSON.stringify(arr[i]));
   }
 
   // This save the first element in the parkingLotID var and
   // remove it from the arary, hence arr will no longer have
   // the 0th value
   parkingLotID = arr.shift();
-  // console.log(JSON.stringify(arr));
 
   // Looping through the remaining array and checking which parkings have true
   // value...
@@ -149,7 +124,6 @@ const checkForViolation = (data) => {
       parkingsWithCars.push(`P${i + 1}`);
     }
   }
-  //   console.log(JSON.stringify(parkingsShownWithCars));
   getTheCurrentDateAndTime();
   console.log(`The time is: ${timeIn24Hours}`);
   console.log(`The date is: ${timeStamp}`);
@@ -164,8 +138,6 @@ const getTheCurrentDateAndTime = () => {
     localeMatcher: "best fit",
     timeZoneName: "short",
   });
-  // console.log(localDate_fromUnix)
-  // .split(", ");
   let brokenTime = localDate_fromUnix.split(" ");
   // var currentTimeToConvert = localDate_fromUnix.slice(11, 22);
   // var currentHoursIn24hours = convertTime(currentTimeToConvert);
@@ -208,7 +180,6 @@ const checkForVioloations = async (parkingSlotName) => {
     // There is a violation
     console.log("We don't have a booking for this slot at this time.");
     checkViloationCollection(parkingSlotName);
-    // return;
   }
 
   snapshot.forEach((doc) => {
