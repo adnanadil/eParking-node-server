@@ -1,3 +1,4 @@
+// This is the one
 const express = require("express");
 const app = express();
 const http = require("http");
@@ -34,6 +35,17 @@ const io = new Server(server, {
     credentials: true,
   },
   allowEIO3: true,
+});
+
+var updateParkingLotIDInRealTime = ""
+const doc = db.collection('selected').doc('jCeKiQgdMsh8BAMTgRlr');
+
+const observer = doc.onSnapshot(docSnapshot => {
+  console.log(`Parking Lot ID: ${docSnapshot._fieldsProto.selectedLotID.stringValue}`)
+  console.log(`Parking Lot: ${docSnapshot._fieldsProto.selectedLot.stringValue}`)
+  updateParkingLotIDInRealTime = docSnapshot._fieldsProto.selectedLotID.stringValue
+}, err => {
+  console.log(`Encountered error: ${err}`);
 });
 
 // This is the main socketio server side logic which runs when socketio functions are called by the client
@@ -83,7 +95,11 @@ io.on("connection", (socket) => {
 const updateTheChoosenParkingOnBoard = async (data) => {
   let name = ""
   arr = data.split(", ");
-  parkingLotID = arr.shift();
+  // Getting parking lot ID from the board and searching it
+  // We are no longer doing this from the board
+  // By Default it will be the previous value chosen
+  // parkingLotID = arr.shift();
+  parkingLotID = updateParkingLotIDInRealTime;
   const parkingLotRef = db.collection("parkingLots").doc(parkingLotID);
   const doc = await parkingLotRef.get();
   if (!doc.exists) {
@@ -92,10 +108,13 @@ const updateTheChoosenParkingOnBoard = async (data) => {
     // console.log("Document data:", doc.data());
     name = doc.data().name;
     
-    console.log(name);
+    console.log(`We search for this parking lot: ${name}`);
   }
-  const docRef = db.collection("selected").doc("jCeKiQgdMsh8BAMTgRlr");
-    await docRef.update({ selectedLot: name });
+
+  // Update the parking Lot selected
+  // We are no longer doing this from the board
+  // const docRef = db.collection("selected").doc("jCeKiQgdMsh8BAMTgRlr");
+  // await docRef.update({ selectedLot: name });
 };
 
 let parkingLotID;
