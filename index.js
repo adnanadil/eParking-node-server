@@ -1,4 +1,4 @@
-// This is the one
+// The required libraries are imported
 const express = require("express");
 const app = express();
 const http = require("http");
@@ -37,16 +37,24 @@ const io = new Server(server, {
   allowEIO3: true,
 });
 
-var updateParkingLotIDInRealTime = ""
-const doc = db.collection('selected').doc('jCeKiQgdMsh8BAMTgRlr');
+var updateParkingLotIDInRealTime = "";
+const doc = db.collection("selected").doc("jCeKiQgdMsh8BAMTgRlr");
 
-const observer = doc.onSnapshot(docSnapshot => {
-  console.log(`Parking Lot ID: ${docSnapshot._fieldsProto.selectedLotID.stringValue}`)
-  console.log(`Parking Lot: ${docSnapshot._fieldsProto.selectedLot.stringValue}`)
-  updateParkingLotIDInRealTime = docSnapshot._fieldsProto.selectedLotID.stringValue
-}, err => {
-  console.log(`Encountered error: ${err}`);
-});
+const observer = doc.onSnapshot(
+  (docSnapshot) => {
+    console.log(
+      `Parking Lot ID: ${docSnapshot._fieldsProto.selectedLotID.stringValue}`
+    );
+    console.log(
+      `Parking Lot: ${docSnapshot._fieldsProto.selectedLot.stringValue}`
+    );
+    updateParkingLotIDInRealTime =
+      docSnapshot._fieldsProto.selectedLotID.stringValue;
+  },
+  (err) => {
+    console.log(`Encountered error: ${err}`);
+  }
+);
 
 // This is the main socketio server side logic which runs when socketio functions are called by the client
 io.on("connection", (socket) => {
@@ -73,14 +81,14 @@ io.on("connection", (socket) => {
       room: "16",
     });
 
-    // This block is needed when we get an instruction from NodemMCU and we will 
-    // Update the server, run server side logic and update the firestore database.. 
+    // This block is needed when we get an instruction from NodemMCU and we will
+    // Update the server, run server side logic and update the firestore database..
     checkForViolation(data.message);
-    delViolations()
-    // If the parking Lot is changed then we change the name to be displayed 
-    // on top of the open gate button 
+    delViolations();
+    // If the parking Lot is changed then we change the name to be displayed
+    // on top of the open gate button
     updateTheChoosenParkingOnBoard(data.message);
-    console.log(`Recived data: ${data.message}`)
+    console.log(`Recived data: ${data.message}`);
   });
 
   console.log("Connected");
@@ -93,7 +101,7 @@ io.on("connection", (socket) => {
 });
 
 const updateTheChoosenParkingOnBoard = async (data) => {
-  let name = ""
+  let name = "";
   arr = data.split(", ");
   // Getting parking lot ID from the board and searching it
   // We are no longer doing this from the board
@@ -107,12 +115,12 @@ const updateTheChoosenParkingOnBoard = async (data) => {
   } else {
     // console.log("Document data:", doc.data());
     name = doc.data().name;
-    
+
     console.log(`We search for this parking lot: ${name}`);
   }
 
-  // Update the parking Lot selected
-  // We are no longer doing this from the board
+  // Update the parking Lot selected from the admin app instead of the keypad
+  // on the parking prototype
   // const docRef = db.collection("selected").doc("jCeKiQgdMsh8BAMTgRlr");
   // await docRef.update({ selectedLot: name });
 };
@@ -126,12 +134,8 @@ let dateToSave;
 const checkForViolation = (data) => {
   arr = data.split(", ");
 
-  // Printing the converted string array
-  for (i = 0; i < arr.length; i++) {
-  }
-
-  // This save the first element in the parkingLotID var and
-  // remove it from the arary, hence arr will no longer have
+  // This saves the first element in the parkingLotID var and
+  // removes it from the arary, hence arr will no longer have
   // the 0th value
   parkingLotID = arr.shift();
 
@@ -144,8 +148,6 @@ const checkForViolation = (data) => {
     }
   }
   getTheCurrentDateAndTime();
-  console.log(`The time is: ${timeIn24Hours}`);
-  console.log(`The date is: ${timeStamp}`);
   parkingsWithCars.forEach((eachParking) => {
     checkForVioloations(eachParking);
   });
@@ -160,20 +162,20 @@ const getTheCurrentDateAndTime = () => {
   let brokenTime = localDate_fromUnix.split(" ");
   // var currentTimeToConvert = localDate_fromUnix.slice(11, 22);
   // var currentHoursIn24hours = convertTime(currentTimeToConvert);
-  dateToSave = brokenTime[0]
-  var currentHoursIn24hours = convertTime(brokenTime[1] + " " +brokenTime[2]);
+  dateToSave = brokenTime[0];
+  var currentHoursIn24hours = convertTime(brokenTime[1] + " " + brokenTime[2]);
   timeIn24Hours = parseInt(currentHoursIn24hours);
 
   // const dateInString = localDate_fromUnix.slice(0, 10);
   const dateInString = brokenTime[0];
-  console.log(brokenTime[0])
+  console.log(brokenTime[0]);
   timeStamp = moment(dateInString, "MM/DD/YYYY").unix();
 };
 
 const convertTime = (timeStr) => {
   const [time, modifier] = timeStr.split(" ");
   let [hours, minutes, seconds] = time.split(":");
-  minute = minutes
+  minute = minutes;
   if (hours === "12") {
     hours = "00";
   }
@@ -243,7 +245,9 @@ const delViolations = async () => {
   getTheCurrentDateAndTime();
   console.log(`HI: ${timeStamp}`);
   const violationRef = db.collection(`violations`);
-  const snapshot = await violationRef.where("timeInt", "!=", timeIn24Hours).get();
+  const snapshot = await violationRef
+    .where("timeInt", "!=", timeIn24Hours)
+    .get();
   if (snapshot.empty) {
     // Violation not added in db so we will add it now
     console.log("We will not del violations...");
@@ -255,7 +259,9 @@ const delViolations = async () => {
     });
   }
 
-  const snapshot_2 = await violationRef.where("timeStamp", "<", timeStamp).get();
+  const snapshot_2 = await violationRef
+    .where("timeStamp", "<", timeStamp)
+    .get();
   if (snapshot_2.empty) {
     // Violation not added in db so we will add it now
     console.log("We will not del violations...");
@@ -319,6 +325,6 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log("SERVER IS RUNNING");
   console.log(`This is the port: ${PORT}`);
-    delReservations()
-    // delViolations();
+  delReservations();
+  // delViolations();
 });
